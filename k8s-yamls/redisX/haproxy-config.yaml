@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: haproxy-config
+data:
+  haproxy.cfg: |
+    global
+        log /dev/log local0
+        log /dev/log local1 notice
+        maxconn 200
+
+    defaults
+        log     global
+        option  tcplog
+        timeout connect 5000ms
+        timeout client 50000ms
+        timeout server 50000ms
+
+    frontend redis_front
+        bind *:6379
+        mode tcp
+        default_backend redis_back
+
+    backend redis_back
+        mode tcp
+        option  tcp-check
+        balance roundrobin
+        server redis-master redis-master.default.svc.cluster.local:6379 check
+        server redis-slave redis-slave.default.svc.cluster.local:6379 check
